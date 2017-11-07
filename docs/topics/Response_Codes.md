@@ -17,7 +17,7 @@ Our API will return semantically valid HTTP response codes based on the success 
 | 403 (FORBIDDEN) | The `Authorization` token you passed did not have permission to the resource |
 | 404 (NOT FOUND) | The resource at the location specified doesn't exist |
 | 405 (METHOD NOT ALLOWED) | The HTTP method used is not valid for the location specified |
-| 429 (TOO MANY REQUESTS) | You've made too many requests, see [Rate Limiting](#DOCS_REFERENCE/rate-limiting) |
+| 429 (TOO MANY REQUESTS) | You've made too many requests, see [Rate Limits](#DOCS_RATE_LIMITS/rate-limits) |
 | 502 (GATEWAY UNAVAILABLE) | There was not a gateway available to process your request. Wait a bit and retry |
 | 5xx (SERVER ERROR) | The server had an error processing your request (these are rare) |
 
@@ -50,11 +50,12 @@ Along with the HTTP error code, our API can also return more detailed error code
 | 30003 | Maximum number of pins reached (50) |
 | 30005 | Maximum number of guild roles reached (250) |
 | 30010 | Too many reactions |
+| 30013 | Maximum number of guild channels reached (500) |
 | 40001 | Unauthorized |
 | 50001 | Missing access |
 | 50002 | Invalid account type |
 | 50003 | Cannot execute action on a DM channel |
-| 50004 | Embed disabled |
+| 50004 | Widget Disabled |
 | 50005 | Cannot edit a message authored by another user |
 | 50006 | Cannot send an empty message |
 | 50007 | Cannot send messages to this user |
@@ -68,10 +69,14 @@ Along with the HTTP error code, our API can also return more detailed error code
 | 50015 | Note is too long |
 | 50016 | Provided too few or too many messages to delete. Must provide at least 2 and fewer than 100 messages to delete. |
 | 50019 | A message can only be pinned to the channel it was sent in |
+| 50021 | Cannot execute action on a system message |
 | 50034 | A message provided was too old to bulk delete |
-| 90001 | Reaction Blocked |
+| 50035 | Invalid Form Body |
+| 50036 | An invite was accepted to a guild the application's bot is not in |
+| 50041 | Invalid API version |
+| 90001 | Reaction blocked |
 
-###### JSON Error Response Example
+###### Example JSON Error Response
 
 ```json
 {

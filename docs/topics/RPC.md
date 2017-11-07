@@ -4,34 +4,32 @@ All Discord clients have an RPC server running on localhost that allows control 
 
 ## Private Beta FYI
 
-For now RPC is in private beta, which means that only apps that have signed up can access the RPC. If you're interested in trying out Discord to power your game please [sign up over here](https://discordapp.com/gamebridge).
+For now, RPC is in private beta, which means that only apps that have signed up can access the RPC. If you're interested in trying out Discord to power your game, please [sign up here](https://discordapp.com/gamebridge).
 
 ## Sample Code
 
-In addition to the documentation below we have put together a sample project that shows the basics of using the RPC within a game. Check it out if you'd like to see how all of these concepts come together. [Click this link and you'll find it](https://github.com/hammerandchisel/sample-game-integration).
+In addition to the documentation below, we have put together a sample project that shows the basics of using the RPC within a game. [Check it out](https://github.com/discordapp/sample-game-integration) if you'd like to see how all of these concepts come together.
 
 ## Connecting to the RPC Server
 
-The local RPC server runs only on localhost (`127.0.0.1`) and can be accessed over TLS with our `discordapp.io` domain.
-
-The RPC Server is setup to process WebSocket connections and proxy API requests.
+The local RPC server runs on localhost (`127.0.0.1`) and is set up to process WebSocket connections and proxy API requests.
 
 For WebSocket connections, the connection is always
 
 ```
-wss://discordapp.io:PORT/?v=VERSION&client_id=CLIENT_ID&encoding=ENCODING
+ws://127.0.0.1:PORT/?v=VERSION&client_id=CLIENT_ID&encoding=ENCODING
 ```
 
-* `CLIENT_ID` is the client ID of the application accessing the RPC Server. 
-* `VERSION` is the version of the RPC Server. 
+* `CLIENT_ID` is the client ID of the application accessing the RPC Server.
+* `VERSION` is the version of the RPC Server.
 * `PORT` is the port of the RPC Server.
 * `ENCODING` is the type of encoding for this connection to use. `json` and `etf` are supported.
 
-You'll need to create an app on Discord's platform. To do that head to [your apps](https://discordapp.com/developers/applications/me) and click the giant plus button. When you create an app on our Developers site, you must specify an "RPC Origin" and "Redirect URI" to permit connections and authorizations from. **The origin you send when connecting and the redirect uri you send when exchanging an authorization code for an access token must match one of the ones entered on the Developers site.**
+To begin, you'll need to create an app on Discord's platform. Head to [your apps](https://discordapp.com/developers/applications/me) and click the big plus button. When you create an app on our Developers site, you must specify an "RPC Origin" and "Redirect URI" from which to permit connections and authorizations. **The origin you send when connecting and the redirect uri you send when exchanging an authorization code for an access token must match one of the ones entered on the Developers site.**
 
 When establishing a WebSocket connection, we verify the Origin header on connection to prevent client ID spoofing, so you will be instantly disconnected if the Origin does not match.
 
-If you're connecting to the RPC server from within a browser, RPC origins are usually in the form `SCHEME://HOST[:PORT]`, where `SCHEME` is typically https or http, `HOST` is your domain or ip, and `PORT` is the port of the webserver where the user will be connecting from (omitted for ports 80 and 443). For example, `https://discordapp.com` would be used if the user is connecting from `https://discordapp.com/some/page/url`.
+If you're connecting to the RPC server from within a browser, RPC origins are usually in the form `SCHEME://HOST[:PORT]`, where `SCHEME` is typically https or http, `HOST` is your domain or ip, and `PORT` is the port of the webserver from which the user will be connecting (omitted for ports 80 and 443). For example, `https://discordapp.com` would be used if the user were connecting from `https://discordapp.com/some/page/url`.
 
 If you're connecting to the RPC server from within a non-browser application (like a game), you just need to make sure that the origin is sent with the upgrade request when connecting to the WebSocket. For local testing, we recommend testing with an origin like `https://localhost`. For production apps, we recommend setting the origin to your company/game's domain, for example `https://discordapp.com`.
 
@@ -42,17 +40,17 @@ If you request the `rpc.api` scope when authorizing your app to the client, your
 For proxied API requests, the schema, host, and path to the API endpoint is always
 
 ```
-https://discordapp.io:PORT/
+http://127.0.0.1:PORT/
 ```
 
 * `PORT` is the port of the RPC Server.
 
-Proxied API requests accept your OAuth2 Bearer token in the Authorization header, and respond exactly as our API normally would. The only difference between proxied and non-proxied API requests are that proxied requests are executed with the user's token instead of the OAuth2 Bearer token, which provides access to modify most of what the client has access to (we do block certain endpoints which are deemed unsafe, like most authentication-related endpoints and user management endpoints).
+Proxied API requests accept your OAuth2 Bearer token in the Authorization header, and respond exactly as our API normally would. The only difference between proxied and non-proxied API requests are that proxied requests are executed with the user's token instead of the OAuth2 Bearer token, which provides access to modify most of what the client has access to. We do block certain endpoints which are deemed unsafe, like most authentication-related endpoints and user management endpoints.
 
 ###### Example RPC Proxy Call
 
 ```
-curl -H 'Authorization: Bearer CZhtkLDpNYXgPH9Ml6shqh2OwykChw' https://discordapp.io:6463/users/@me/guilds
+curl -H 'Authorization: Bearer CZhtkLDpNYXgPH9Ml6shqh2OwykChw' http://127.0.0.1:6463/users/@me/guilds
 
 [{
     "owner": true,
@@ -69,7 +67,7 @@ Proxied API requests are not applicable to the rest of the RPC Server docs, so c
 
 For connections to the RPC server, a [whitelist](#DOCS_RPC/authorize) is used to restrict access while you're still developing. You can invite up to 50 people to your whitelist.
 
-For applications/games not approved, we limit you to 10 guilds and 10 channels your app can create. This limit is raised to virtually unlimited after approval.
+For applications/games not approved, we limit you to creating 10 guilds and 10 channels. This limit is raised to virtually unlimited after approval.
 
 ## RPC Server Versions
 
@@ -89,9 +87,9 @@ The port range for Discord's local RPC server is [6463, 6472]. Since the RPC ser
 
 | Field | Type | Description | Present |
 |-------|------|-------------|-------------|
-| cmd | enum | payload command | Always |
+| cmd | enum | [payload command](#DOCS_RPC/rpc-server-payloads-rpc-commands) | Always |
 | nonce | string | unique string used once for replies from the server | In responses to commands (not subscribed events) |
-| evt | enum | subscription event | In subscribed events, errors, and (un)subscribing events |
+| evt | enum | [subscription event](#DOCS_RPC/rpc-server-payloads-rpc-events) | In subscribed events, errors, and (un)subscribing events |
 | data | object | event data | In responses from the server |
 | args | object | command arguments | In commands sent to the server |
 
@@ -173,7 +171,7 @@ The port range for Discord's local RPC server is [6463, 6472]. Since the RPC ser
 
 ## Authenticating over RPC
 
-In order to call any commands over RPC, you must be authenticated or you will receive a code `4006` error response. 
+In order to call any commands over RPC, you must be authenticated or you will receive a code `4006` error response.
 
 We have implemented the OAuth2 flow over RPC. To authenticate, you will need to get an access token.
 
@@ -201,12 +199,12 @@ Used to authenticate an existing client with your app.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| user | User | partial user object |
-| scopes | Array | array of authorized [OAuth2 scopes](#DOCS_OAUTH2/scopes) |
-| expires | Date | expiration date of OAuth2 token |
-| application | Application | OAuth2 application object |
+| user | partial [user](#DOCS_USER/user-object) object | the authed user |
+| scopes | array of [OAuth2 scopes](#DOCS_OAUTH2/scopes) | authorized scopes |
+| expires | date | expiration date of OAuth2 token |
+| application | [OAuth2 application](#DOCS_RPC/oauth2-application-object) object | application the user authorized |
 
-###### Authenticate Example Command Payload
+###### Example Authenticate Command Payload
 
 ```json
 {
@@ -218,7 +216,7 @@ Used to authenticate an existing client with your app.
 }
 ```
 
-###### Authenticate Example Response Payload
+###### Example Authenticate Response Payload
 
 ```json
 {
@@ -244,6 +242,18 @@ Used to authenticate an existing client with your app.
 }
 ```
 
+## OAuth2 Application Object
+
+###### OAuth2 Application Structure
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| description | string | application description |
+| icon | string | hash of the icon |
+| id | snowflake | application client id |
+| rpc_origins | array | array of strings - |
+| name | string | application name
+
 ### AUTHORIZE
 
 Used to authenticate a new client with your app. By default this pops up a modal in-app that asks the user to authorize access to your app.
@@ -256,18 +266,18 @@ We also have an RPC token system to bypass the user authorization modal. This is
 
 | Field | Type | Description |
 |-------|------|-------------|
-| scopes | Array | array of OAuth2 scopes to authorize |
-| client_id | String | OAuth2 application id |
-| rpc_token | String | one-time use RPC token |
-| username | String | username to create a guest account with if the user does not have Discord (only in GameBridge SDK) |
+| scopes | array of [OAuth2 scopes](#DOCS_OAUTH2/scopes) | scopes to authorize |
+| client_id | string | OAuth2 application id |
+| rpc_token | string | one-time use RPC token |
+| username | string | username to create a guest account with if the user does not have Discord (only in GameBridge SDK) |
 
 ###### Authorize Response Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| code | String | OAuth2 authorization code |
+| code | string | OAuth2 authorization code |
 
-###### Authorize Example Command Payload
+###### Example Authorize Command Payload
 
 ```json
 {
@@ -280,7 +290,7 @@ We also have an RPC token system to bypass the user authorization modal. This is
 }
 ```
 
-###### Authorize Example Response Payload
+###### Example Authorize Response Payload
 
 ```json
 {
@@ -300,9 +310,9 @@ Used to get a list of guilds the client is in.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| guilds | Array | array of partial guild objects |
+| guilds | array of partial [guild](#DOCS_GUILD/guild-object) objects | the guilds the user is in |
 
-###### Get Guilds Example Command Payload
+###### Example Get Guilds Command Payload
 
 ```json
 {
@@ -312,7 +322,7 @@ Used to get a list of guilds the client is in.
 }
 ```
 
-###### Get Guilds Example Response Payload
+###### Example Get Guilds Response Payload
 
 ```json
 {
@@ -335,19 +345,19 @@ Used to get a guild the client is in.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| guild_id | String | id of the guild to get |
-| timeout | Number | asyncronously get guild with time to wait before timing out |
+| guild_id | string | id of the guild to get |
+| timeout | integer | asyncronously get guild with time to wait before timing out |
 
 ###### Get Guild Response Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | String | guild id |
-| name | String | guild name |
-| icon_url | String | guild icon url |
-| members | Array | array of guild members |
+| id | string | guild id |
+| name | string | guild name |
+| icon_url | string | guild icon url |
+| members | array of [guild member](#DOCS_GUILD/guild-member-object) objects | members of the guild |
 
-###### Get Guild Example Command Payload
+###### Example Get Guild Command Payload
 
 ```json
 {
@@ -359,7 +369,7 @@ Used to get a guild the client is in.
 }
 ```
 
-###### Get Guild Example Response Payload
+###### Example Get Guild Response Payload
 
 ```json
 {
@@ -402,24 +412,24 @@ Used to get a channel the client is in.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | id of the channel to get |
+| channel_id | string | id of the channel to get |
 
 ###### Get Channel Response Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | String | channel id |
-| guild_id | String | channel's guild id |
-| name | String | channel name |
-| type | Number | channel type (guild text: 0, guild voice: 2, dm: 1, group dm: 3) |
-| topic | String | (text) channel topic |
-| bitrate | Int | (voice) bitrate of voice channel |
-| user_limit | Int | (voice) user limit of voice channel (0 for none) |
-| position | Int | position of channel in channel list |
-| voice_states | Array | (voice) array of channel voice states |
-| messages | Array | (text) array of channel text messages |
+| id | string | channel id |
+| guild_id | string | channel's guild id |
+| name | string | channel name |
+| type | integer | channel type (guild text: 0, guild voice: 2, dm: 1, group dm: 3) |
+| topic | string | (text) channel topic |
+| bitrate | integer | (voice) bitrate of voice channel |
+| user_limit | integer | (voice) user limit of voice channel (0 for none) |
+| position | integer | position of channel in channel list |
+| voice_states | array of [voice state](#DOCS_VOICE/voice-state-object) objects | (voice) channel's voice states |
+| messages | array of [message](#DOCS_CHANNEL/message-object) objects | (text) channel's messages |
 
-###### Get Channel Example Command Payload
+###### Example Get Channel Command Payload
 
 ```json
 {
@@ -431,7 +441,7 @@ Used to get a channel the client is in.
 }
 ```
 
-###### Get Channel Example Response Payload
+###### Example Get Channel Response Payload
 
 ```json
 {
@@ -480,15 +490,15 @@ Used to get a guild's channels the client is in.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| guild_id | String | id of the guild to get channels for |
+| guild_id | string | id of the guild to get channels for |
 
 ###### Get Channels Response Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channels | Array | array of partial channels |
+| channels | array of partial [channel](#DOCS_CHANNEL/channel-object) objects | guild channels the user is in |
 
-###### Get Channels Example Command Payload
+###### Example Get Channels Command Payload
 
 ```json
 {
@@ -500,7 +510,7 @@ Used to get a guild's channels the client is in.
 }
 ```
 
-###### Get Channels Example Response Payload
+###### Example Get Channels Response Payload
 
 ```json
 {
@@ -528,27 +538,27 @@ Used to change voice settings of users in voice channels
 
 | Field | Type | Description |
 |-------|------|-------------|
-| user_id | String | user id |
-| pan | Pan Object | (optional) set the pan of the user |
-| volume | Number | (optional) set the volume of user (defaults to 100, min 0, max 200)|
-| mute | Boolean | (optional) set the mute state of the user |
+| user_id | string | user id |
+| pan? | [pan](#DOCS_RPC/pan-object) object | set the pan of the user |
+| volume? | integer | set the volume of user (defaults to 100, min 0, max 200)|
+| mute? | bool | set the mute state of the user |
 
 >info
-> In the current release, we only support a single modifier of voice settings at a time over RPC. 
-> If an app changes voice settings, it will lock voice settings so that other apps connected simultaneously 
-> lose the ability to change voice settings. Settings reset to what they were before being changed after the 
-> controlling app disconnects. When an app that has previously set voice settings connects, the client will swap 
-> to that app's configured voice settings and lock voice settings again. This is a temporary situation that will 
-> be changed in the future.
+>In the current release, we only support a single modifier of voice settings at a time over RPC.
+>If an app changes voice settings, it will lock voice settings so that other apps connected simultaneously
+>lose the ability to change voice settings. Settings reset to what they were before being changed after the
+>controlling app disconnects. When an app that has previously set voice settings connects, the client will swap
+>to that app's configured voice settings and lock voice settings again. This is a temporary situation that will
+>be changed in the future.
 
-###### Pan Object
+## Pan Object
 
 | Field | Type | Description |
 |-------|------|-------------|
-| left | Float | left pan of user (min: 0.0, max: 1.0) |
-| right | Float | right pan of user (min: 0.0, max: 1.0) |
+| left | float | left pan of user (min: 0.0, max: 1.0) |
+| right | float | right pan of user (min: 0.0, max: 1.0) |
 
-###### Set User Voice Settings Example Command Payload
+###### Example Set User Voice Settings Command Payload
 
 ```json
 {
@@ -566,7 +576,7 @@ Used to change voice settings of users in voice channels
 }
 ```
 
-###### Set User Voice Settings Example Response Payload
+###### Example Set User Voice Settings Response Payload
 
 ```json
 {
@@ -592,18 +602,18 @@ Used to join and leave voice channels, group dms, or dms
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | channel id to join (or `null` to leave) |
-| timeout | Number | asyncronously join channel with time to wait before timing out |
-| force | Boolean | forces a user to join a voice channel |
+| channel_id | string | channel id to join (or `null` to leave) |
+| timeout | integer | asyncronously join channel with time to wait before timing out |
+| force | bool | forces a user to join a voice channel |
 
 >warn
-> When trying to join the user to a voice channel, you will receive a `5003` error coded response if the user is already in a voice channel. The `force` parameter should only be specified in response to the case where a user is already in a voice channel and they have **approved** to be moved by your app to a new voice channel.
+>When trying to join the user to a voice channel, you will receive a `5003` error coded response if the user is already in a voice channel. The `force` parameter should only be specified in response to the case where a user is already in a voice channel and they have **approved** to be moved by your app to a new voice channel.
 
 ###### Select Voice Channel Response Structure
 
 Returns the Get Channel response, `null` if none.
 
-###### Select Voice Channel Example Command Payload
+###### Example Select Voice Channel Command Payload
 
 ```json
 {
@@ -615,7 +625,7 @@ Returns the Get Channel response, `null` if none.
 }
 ```
 
-###### Select Voice Channel Example Response Payload
+###### Example Select Voice Channel Response Payload
 
 ```json
 {
@@ -668,7 +678,7 @@ There are no arguments for this command
 
 Returns the Get Channel response, `null` if none.
 
-###### Get Selected Voice Channel Example Command Payload
+###### Example Get Selected Voice Channel Command Payload
 
 ```json
 {
@@ -677,7 +687,7 @@ Returns the Get Channel response, `null` if none.
 }
 ```
 
-###### Get Selected Voice Channel Example Response Payload
+###### Example Get Selected Voice Channel Response Payload
 
 ```json
 {
@@ -726,14 +736,14 @@ Used to join and leave text channels, group dms, or dms
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | channel id to join (or `null` to leave) |
-| timeout | Number | asyncronously join channel with time to wait before timing out |
+| channel_id | string | channel id to join (or `null` to leave) |
+| timeout | integer | asyncronously join channel with time to wait before timing out |
 
 ###### Select Text Channel Response Structure
 
 Returns the Get Channel response, `null` if none.
 
-###### Select Text Channel Example Command Payload
+###### Example Select Text Channel Command Payload
 
 ```json
 {
@@ -745,7 +755,7 @@ Returns the Get Channel response, `null` if none.
 }
 ```
 
-###### Select Text Channel Example Response Payload
+###### Example Select Text Channel Response Payload
 
 ```json
 {
@@ -797,52 +807,61 @@ Returns the Get Channel response, `null` if none.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| input | VoiceSettingsInput | voice settings input object |
-| output | VoiceSettingsOuput | voice settings output object |
-| mode | VoiceSettingsMode | voice settings mode object |
-| automatic_gain_control | Boolean | state of automatic gain control |
-| echo_cancellation | Boolean | state of echo cancellation |
-| noise_suppression | Boolean | state of noise suppression |
-| qos | Boolean | state of voice quality of service |
-| silence_warning | Boolean | state of silence warning notice |
-| deaf | Boolean | state of self-deafen |
-| mute | Boolean | state of self-mute |
+| input | [voice settings input](#DOCS_RPC/voice-settings-input-object) object | input settings |
+| output | [voice settings ouput](#DOCS_RPC/voice-settings-output-object) | output settings |
+| mode | [voice settings mode](#DOCS_RPC/voice-settings-mode-object) object | voice mode settings |
+| automatic_gain_control | bool | state of automatic gain control |
+| echo_cancellation | bool | state of echo cancellation |
+| noise_suppression | bool | state of noise suppression |
+| qos | bool | state of voice quality of service |
+| silence_warning | bool | state of silence warning notice |
+| deaf | bool | state of self-deafen |
+| mute | bool | state of self-mute |
 
-###### VoiceSettingsInput Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| device_id | String | device id |
-| volume | Float | input voice level (min: 0, max: 100) |
-| available_devices | Array | array of *read-only* device objects containing `id` and `name` string keys |
-
-###### VoiceSettingsOutput Structure
+### Voice Settings Input Object
 
 | Field | Type | Description |
 |-------|------|-------------|
-| device_id | String | device id |
-| volume | Float | output voice level (min: 0, max: 200) |
-| available_devices | Array | array of *read-only* device objects containing `id` and `name` string keys |
+| device_id | string | device id |
+| volume | float | input voice level (min: 0, max: 100) |
+| available_devices | array | array of *read-only* device objects containing `id` and `name` string keys |
 
-###### VoiceSettingsMode Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| type | Enum | voice setting mode type (can be `PUSH_TO_TALK` or `VOICE_ACTIVITY` |
-| auto_threshold | Boolean | voice activity threshold automatically sets its threshold |
-| threshold | Float | threshold for voice activity (in dB) (min: -100, max: 0) |
-| shortcut | ShortcutKeyCombo | shortcut key combo array for PTT |
-| delay | Float | the PTT release delay (in ms) (min: 0, max: 2000) |
-
-###### ShortcutKeyCombo Structure
+### Voice Settings Output Object
 
 | Field | Type | Description |
 |-------|------|-------------|
-| type | Int | key type. `0`: keyboard key, `1`: mouse button, `2`: keyboard modifier key, `3`: gamepad button |
-| code | Int | key code |
-| name | String | key name |
+| device_id | string | device id |
+| volume | float | output voice level (min: 0, max: 200) |
+| available_devices | array | array of *read-only* device objects containing `id` and `name` string keys |
 
-###### Get Voice Settings Example Response Payload
+### Voice Settings Mode Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| type | string | voice setting mode type (can be `PUSH_TO_TALK` or `VOICE_ACTIVITY`) |
+| auto_threshold | bool | voice activity threshold automatically sets its threshold |
+| threshold | float | threshold for voice activity (in dB) (min: -100, max: 0) |
+| shortcut | [shortcut key combo](#DOCS_RPC/shortcut-key-combo-object) object | shortcut key combos for PTT |
+| delay | float | the PTT release delay (in ms) (min: 0, max: 2000) |
+
+### Shortcut Key Combo Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| type | integer | see [key types](#DOCS_RPC/shortcut-key-combo-object-key-types) |
+| code | integer | key code |
+| name | string | key name |
+
+###### Key Types
+
+| Type | Id |
+| ---- | -- |
+| KEYBOARD_KEY | 0 |
+| MOUSE_BUTTON | 1 |
+| KEYBOARD_MODIFIER_KEY | 2 |
+| GAMEPAD_BUTTON | 3 |
+
+###### Example Get Voice Settings Response Payload
 
 ```json
 {
@@ -896,61 +915,27 @@ Returns the Get Channel response, `null` if none.
 When setting voice settings, all fields are optional. Only passed fields are updated.
 
 >info
-> In the current release, we only support a single modifier of voice settings at a time over RPC. 
-> If an app changes voice settings, it will lock voice settings so that other apps connected simultaneously 
-> lose the ability to change voice settings. Settings reset to what they were before being changed after the 
-> controlling app disconnects. When an app that has previously set voice settings connects, the client will swap 
-> to that app's configured voice settings and lock voice settings again. This is a temporary situation that will 
-> be changed in the future.
+>In the current release, we only support a single modifier of voice settings at a time over RPC.
+>If an app changes voice settings, it will lock voice settings so that other apps connected simultaneously
+>lose the ability to change voice settings. Settings reset to what they were before being changed after the
+>controlling app disconnects. When an app that has previously set voice settings connects, the client will swap
+>to that app's configured voice settings and lock voice settings again. This is a temporary situation that will
+>be changed in the future.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| input | VoiceSettingsInput | voice settings input object |
-| output | VoiceSettingsOuput | voice settings output object |
-| mode | VoiceSettingsMode | voice settings mode object |
-| automatic_gain_control | Boolean | state of automatic gain control |
-| echo_cancellation | Boolean | state of echo cancellation |
-| noise_suppression | Boolean | state of noise suppression |
-| qos | Boolean | state of voice quality of service |
-| silence_warning | Boolean | state of silence warning notice |
-| deaf | Boolean | state of self-deafen |
-| mute | Boolean | state of self-mute |
+| input | [voice settings input](#DOCS_RPC/voice-settings-input-object) object | input settings |
+| output | [voice settings ouput](#DOCS_RPC/voice-settings-output-object) | output settings |
+| mode | [voice settings mode](#DOCS_RPC/voice-settings-mode-object) object | voice mode settings |
+| automatic_gain_control | bool | state of automatic gain control |
+| echo_cancellation | bool | state of echo cancellation |
+| noise_suppression | bool | state of noise suppression |
+| qos | bool | state of voice quality of service |
+| silence_warning | bool | state of silence warning notice |
+| deaf | bool | state of self-deafen |
+| mute | bool | state of self-mute |
 
-###### VoiceSettingsInput Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| device_id | String | device id |
-| volume | Float | input voice level (min: 0, max: 100) |
-| available_devices | Array | array of *read-only* device objects containing `id` and `name` string keys |
-
-###### VoiceSettingsOutput Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| device_id | String | device id |
-| volume | Float | output voice level (min: 0, max: 200) |
-| available_devices | Array | array of *read-only* device objects containing `id` and `name` string keys |
-
-###### VoiceSettingsMode Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| type | Enum | voice setting mode type (can be `PUSH_TO_TALK` or `VOICE_ACTIVITY` |
-| auto_threshold | Boolean | voice activity threshold automatically sets its threshold |
-| threshold | Float | threshold for voice activity (in dB) (min: -100, max: 0) |
-| shortcut | ShortcutKeyCombo | shortcut key combo array for PTT |
-| delay | Float | the PTT release delay (in ms) (min: 0, max: 2000) |
-
-###### ShortcutKeyCombo Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| type | Int | key type. `0`: keyboard key, `1`: mouse button, `2`: keyboard modifier key, `3`: gamepad button |
-| code | Int | key code |
-| name | String | key name |
-
-###### Set Voice Settings Example Command Payload
+###### Example Set Voice Settings Command Payload
 
 ```json
 {
@@ -964,7 +949,7 @@ When setting voice settings, all fields are optional. Only passed fields are upd
 }
 ```
 
-###### Set Voice Settings Example Response Payload
+###### Example Set Voice Settings Response Payload
 
 ```json
 {
@@ -1024,9 +1009,9 @@ Used to subscribe to events
 
 | Field | Type | Description |
 |-------|------|-------------|
-| evt | String | event name now subscribed to |
+| evt | string | event name now subscribed to |
 
-###### Subscribe Example Command Payload
+###### Example Subscribe Command Payload
 
 ```json
 {
@@ -1039,7 +1024,7 @@ Used to subscribe to events
 }
 ```
 
-###### Subscribe Example Response Payload
+###### Example Subscribe Response Payload
 
 ```json
 {
@@ -1064,9 +1049,9 @@ Used to unsubscribe from events
 
 | Field | Type | Description |
 |-------|------|-------------|
-| evt | String | event name now unsubscribed from |
+| evt | string | event name now unsubscribed from |
 
-###### Unsubscribe Example Command Payload
+###### Example Unsubscribe Command Payload
 
 ```json
 {
@@ -1079,7 +1064,7 @@ Used to unsubscribe from events
 }
 ```
 
-###### Unsubscribe Example Response Payload
+###### Example Unsubscribe Response Payload
 
 ```json
 {
@@ -1093,13 +1078,15 @@ Used to unsubscribe from events
 
 ### CAPTURE_SHORTCUT
 
-Used to capture a keyboard shortcut entered by the user
-
-###### Capture Shortcut Argument Structure
+Used to capture a keyboard shortcut entered by the user.
 
 This command is asynchronously returned. You capture a shortcut by first sending the `START` action. Then, the user is free to press keys while we log the shortcut key codes for you. As they press keys, we will emit a [CAPTURE_SHORTCUT_CHANGE](#DOCS_RPC/captureshortcutchange) event with the updated key codes. **When the user finishes, you then need to finish capturing by sending the `STOP` action.**
 
+Returns the shortcut captured, and `null` for the `STOP` action.
+
 Note: The `START` call will return the captured shortcut in its `data` object, while the `STOP` call will have no `data`.
+
+###### Capture Shortcut Argument Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1107,13 +1094,11 @@ Note: The `START` call will return the captured shortcut in its `data` object, w
 
 ###### Capture Shortcut Response Structure
 
-Returns the shortcut captured, and `null` for the `STOP` action.
-
 | Field | Type | Description |
 |-------|------|-------------|
-| shortcut | [ShortcutKeyCombo](#DOCS_RPC/shortcutkeycombo-structure) | the captured shortcut key combo array |
+| shortcut | [shortcut key combo](#DOCS_RPC/shortcut-key-combo-object) object | the captured shortcut key combo array |
 
-###### Capture Shortcut Example Command Payload
+###### Example Capture Shortcut Command Payload
 
 ```json
 {
@@ -1125,7 +1110,7 @@ Returns the shortcut captured, and `null` for the `STOP` action.
 }
 ```
 
-###### Capture Shortcut Example Response Payload
+###### Example Capture Shortcut Response Payload
 
 ```json
 {
@@ -1145,10 +1130,18 @@ Returns the shortcut captured, and `null` for the `STOP` action.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| v | Int | RPC version |
-| config | Object | RPC server configuration object |
+| v | integer | RPC version |
+| config | [rpc server configuration](#DOCS_RPC/rpc-server-configuration-object) object | server configuration |
 
-###### Ready Dispatch Example Payload
+### RPC Server Configuration Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| cdn_host | string | server's cdn |
+| api_endpoint | string | server's api endpoint |
+| environment | string | server's environment |
+
+###### Example Ready Dispatch Payload
 
 ```json
 {
@@ -1171,10 +1164,10 @@ Returns the shortcut captured, and `null` for the `STOP` action.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| code | Int | RPC Error Code |
-| message | String | Error description |
+| code | integer | RPC Error Code |
+| message | string | Error description |
 
-###### Error Example Payload
+###### Example Error Payload
 
 ```json
 {
@@ -1194,16 +1187,16 @@ Returns the shortcut captured, and `null` for the `STOP` action.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| guild_id | String | id of guild to listen to updates of |
+| guild_id | string | id of guild to listen to updates of |
 
 ###### Guild Status Dispatch Data Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| guild | Guild | guild partial with id, name, and iconUrl |
-| online | Int | number of online users in guild |
+| guild | partial [guild](#DOCS_GUILD/guild-object) | guild with requested id |
+| online | integer | number of online users in guild |
 
-###### Guild Status Example Dispatch Payload
+###### Example Guild Status Dispatch Payload
 
 ```json
 {
@@ -1230,10 +1223,10 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | String | guild id |
-| name | String | name of the guild |
+| id | string | guild id |
+| name | string | name of the guild |
 
-###### Guild Create Example Dispatch Payload
+###### Example Guild Create Dispatch Payload
 
 ```json
 {
@@ -1256,11 +1249,11 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | String | channel id |
-| name | String | name of the channel |
-| type | Number | channel type (guild text: 0, guild voice: 2, dm: 1, group dm: 3) |
+| id | string | channel id |
+| name | string | name of the channel |
+| type | integer | channel type (guild text: 0, guild voice: 2, dm: 1, group dm: 3) |
 
-###### Channel Create Example Dispatch Payload
+###### Example Channel Create Dispatch Payload
 
 ```json
 {
@@ -1284,10 +1277,10 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | id of channel (`null` if none) |
-| guild_id | String | id of guild (`null` if none) |
+| channel_id | string | id of channel (`null` if none) |
+| guild_id | string | id of guild (`null` if none) |
 
-###### Voice Channel Select Example Dispatch Payload
+###### Example Voice Channel Select Dispatch Payload
 
 ```json
 {
@@ -1310,7 +1303,7 @@ No arguments
 
 Dispatches the voice settings object (see the GET_VOICE_SETTINGS response).
 
-###### Voice Settings Example Dispatch Payload
+###### Example Voice Settings Dispatch Payload
 
 ```json
 {
@@ -1361,13 +1354,13 @@ Dispatches the voice settings object (see the GET_VOICE_SETTINGS response).
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | id of channel to listen to updates of |
+| channel_id | string | id of channel to listen to updates of |
 
 ###### Voice State Dispatch Data Structure
 
 Dispatches channel voice state objects
 
-###### Voice State Example Dispatch Payload
+###### Example Voice State Dispatch Payload
 
 ```json
 {
@@ -1409,11 +1402,11 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| state | String | one of the voice connection states listed below |
-| hostname | String | hostname of the connected voice server |
-| pings | Array of Numbers | last 20 pings (in ms) |
-| average_ping | Number | average ping (in ms) |
-| last_ping | Number | last ping (in ms) |
+| state | string | one of the voice connection states listed below |
+| hostname | string | hostname of the connected voice server |
+| pings | array of integers | last 20 pings (in ms) |
+| average_ping | integer | average ping (in ms) |
+| last_ping | integer | last ping (in ms) |
 
 ###### Voice Connection States
 
@@ -1430,7 +1423,7 @@ No arguments
 | NO_ROUTE | No route to host |
 | ICE_CHECKING | WebRTC ice checking |
 
-###### Voice Connection Status Example Dispatch Payload
+###### Example Voice Connection Status Dispatch Payload
 
 ```json
 {
@@ -1452,13 +1445,13 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | id of channel to listen to updates of |
+| channel_id | string | id of channel to listen to updates of |
 
 ###### Message Dispatch Data Structure
 
 Dispatches message objects, with the exception of deletions, which only contains the id in the message object.
 
-###### Message Example Dispatch Payload
+###### Example Message Dispatch Payload
 
 ```json
 {
@@ -1503,15 +1496,15 @@ Dispatches message objects, with the exception of deletions, which only contains
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | id of channel to listen to updates of |
+| channel_id | string | id of channel to listen to updates of |
 
 ###### Speaking Dispatch Data Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| user_id | String | id of user who started/stopped speaking |
+| user_id | string | id of user who started/stopped speaking |
 
-###### Speaking Example Dispatch Payload
+###### Example Speaking Dispatch Payload
 
 ```json
 {
@@ -1537,13 +1530,13 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| channel_id | String | id of channel where notification occurred |
-| message | Message | message object that generated this notification |
-| icon_url | String | icon url of the notification |
-| title | String | title of the notification |
-| body | String | body of the notification |
+| channel_id | string | id of channel where notification occurred |
+| message | [message](#DOCS_CHANNEL/message-object) object | message that generated this notification |
+| icon_url | string | icon url of the notification |
+| title | string | title of the notification |
+| body | string | body of the notification |
 
-###### Notification Create Example Dispatch Payload
+###### Example Notification Create Dispatch Payload
 
 ```json
 {
@@ -1595,9 +1588,9 @@ No arguments
 
 | Field | Type | Description |
 |-------|------|-------------|
-| shortcut | [ShortcutKeyCombo](#DOCS_RPC/shortcutkeycombo-structure) | the captured shortcut key combo array |
+| shortcut | array of [shortcut key combo](#DOCS_RPC/shortcut-key-combo-object) objects | captured shortcut key combos |
 
-###### Capture Shortcut Change Example Dispatch Payload
+###### Example Capture Shortcut Change Dispatch Payload
 
 ```json
 {

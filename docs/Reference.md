@@ -10,11 +10,33 @@ The base URL for all API requests is:
 https://discordapp.com/api
 ```
 
+## API Versioning
+
+>danger
+>API and Gateway versions below v6 are now discontinued, meaning they are now non-functioning. Trying to use versions below v6 will return 400 Bad Request.
+
+Discord exposes different versions of our API. You can specify version by including it in the request path:
+
+```
+https://discordapp.com/api/v{version_number}
+```
+
+Omitting the version number from the route will route requests to the current default version. You can find the change log for the newest API version [here](https://discordapp.com/developers/docs/change-log).
+
+###### API Versions
+
+| Version | Status | Default |
+| ------- | ------ | ------- |
+| 6 | Available | ✓ |
+| 5 | Discontinued | |
+| 4 | Discontinued | |
+| 3 | Discontinued | |
+
 ## Authentication
 
 Authenticating with the Discord API can be done in one of two ways:
 
-1. Using a bot token gained by [registering a bot](#DOCS_OAUTH2/registering-applications).
+1. Using a bot token gained by [registering a bot](#DOCS_OAUTH2/registering-applications), for more information on bots see [bots vs user accounts](#DOCS_OAUTH2/bot-vs-user-accounts).
 2. Using an OAuth2 bearer token gained through the [OAuth2 API](#DOCS_OAUTH2/oauth2).
 
 For all authentication types, authentication is performed with the `Authorization` HTTP header in the following format:
@@ -43,7 +65,20 @@ All HTTP-layer services and protocols (e.g. http, websocket) within the Discord 
 
 ## Snowflake IDs
 
-Discord utilizes Twitter's [snowflake](https://github.com/twitter/snowflake/tree/snowflake-2010) format for uniquely identifiable descriptors (ID's). These ID's are up to 64bits in size (e.g. a uint64) and therefore are always returned as strings in the API to prevent integer overflows in some languages. Snowflake ID's are guaranteed to be unique across all of Discord, except in some unique scenarios in which child objects share their parents ID.
+Discord utilizes Twitter's [snowflake](https://github.com/twitter/snowflake/tree/snowflake-2010) format for uniquely identifiable descriptors (IDs). These IDs are guaranteed to be unique across all of Discord, except in some unique scenarios in which child objects share their parent's ID. Because Snowflake IDs are up to 64 bits in size (e.g. a uint64), they are always returned as strings in the HTTP API to prevent integer overflows in some languages. See [Gateway ETF/JSON](#DOCS_GATEWAY/etf-json) for more information regarding Gateway encoding.
+
+## Nullable and Optional Resource Fields
+
+Resource fields that may contain a `null` value have types that are prefixed with a question mark.
+Resource fields that are optional have names that are suffixed with a question mark.
+
+###### Example Nullable and Optional Fields
+
+| Field | Type |
+| ----- | ---- |
+| optional_field? | string |
+| nullable_field | ?string |
+| optional_and_nullable_field? | ?string |
 
 ## Consistency
 
@@ -65,13 +100,65 @@ Clients using the HTTP API must provide a valid [User Agent](https://www.w3.org/
 User-Agent: DiscordBot ($url, $versionNumber)
 ```
 
+Clients may append more information and metadata to the _end_ of this string as they wish.
+
 ### Rate Limiting
 
 The HTTP API implements a process for limiting and preventing excessive requests in accordance with [RFC 6585](https://tools.ietf.org/html/rfc6585#section-4). API users that regularly hit and ignore rate limits will have their API keys revoked, and be blocked from the platform. For more information on rate limiting of requests, please see the [Rate Limits](#DOCS_RATE_LIMITS/rate-limits) section.
 
->warn
-> A bot account must connect and identify to a [Gateway](#DOCS_GATEWAY/connecting) at least once before being able to send messages.
-
 ## Gateway (WebSocket) API
 
 Discord's Gateway API is used for maintaining persistent, stateful websocket connections between your client and our servers. These connections are used for sending and receiving real-time events your client can use to track and update local state. The Gateway API uses secure websocket connections as specified in [RFC 6455](https://tools.ietf.org/html/rfc6455). For information on opening Gateway connections, please see the [Gateway API](#DOCS_GATEWAY/gateways) section.
+
+>warn
+>A bot must connect to and identify with a gateway at least once before it can use the [Create Message](#DOCS_CHANNEL/create-message) endpoint.
+>If your only requirement is to send messages to a channel, consider using a [Webhook](#DOCS_WEBHOOK) instead.
+
+## Message Formatting
+
+Discord utilizes a subset of markdown for rendering message content on its clients, while also adding some custom functionality to enable things like mentioning users and channels. This functionality uses the following formats:
+
+###### Formats
+
+| Type | Structure | Example |
+|---------|-------------|-------------|
+| User | <@USER_ID> | <@80351110224678912> |
+| User (Nickname) | <@!USER_ID> | <@!80351110224678912> |
+| Channel | <#CHANNEL_ID> | <#103735883630395392> |
+| Role | <@&ROLE_ID> | <@&165511591545143296> |
+| Custom Emoji | <:NAME:ID> | <:mmLol:216154654256398347> |
+
+Using the markdown for either users, roles, or channels will mention the target(s) accordingly.
+
+## Image Formatting
+
+Discord uses ids and hashes to render images in the client. These hashes can be retrieved through various API requests, like [Get User](#DOCS_USER/get-user). Below are the formats, size limitations, and CDN endpoints for images in Discord. The returned format can be changed by changing the extension name at the end of the URL, within the [limitations](#DOCS_REFERENCE/image-formatting-image-formats). The returned size can be changed by appending a querystring of `?size=desired_size` to the URL, within the [limitations](#DOCS_REFERENCE/image-formatting-image-sizes).
+
+###### Image Formats
+
+| Name | Extension |
+|-------|------------|
+| JPEG | .jpg, .jpeg |
+| PNG | .png |
+| WebP | .webp |
+| GIF | .gif ([user](#DOCS_USER/user-object) avatars only) |
+
+###### Image Sizes
+
+Powers of 2 between 16 and 2048.
+
+>info
+>All image URLs are prefixed with https\://cdn.discordapp.com/
+
+###### CDN Endpoints
+
+| Type | Path | Supports |
+| ---- | --- | -------- |
+| Custom Emoji | emojis/[emoji_id](#DOCS_EMOJI/emoji-object).png | PNG |
+| Guild Icon | icons/[guild_id](#DOCS_GUILD/guild-object)/[guild_icon](#DOCS_GUILD/guild-object).png | PNG, JPEG, WebP |
+| Guild Splash | splashes/[guild_id](#DOCS_GUILD/guild-object)/[guild_splash](#DOCS_GUILD/guild-object).png | PNG, JPEG, WebP |
+| Default User Avatar | embed/avatars/[user_discriminator](#DOCS_USER/user-object).png * | PNG |
+| User Avatar | avatars/[user_id](#DOCS_USER/user-object)/[user_avatar](#DOCS_USER/user-object).png | PNG, JPEG, WebP, GIF |
+| Application Icon | app-icons/[application_id](#MY_APPLICATIONS/top)/[icon](#DOCS_OAUTH2/get-current-application-information).png | PNG, JPEG, WebP |
+
+\* In the case of the Default User Avatar endpoint, the value for `user_discriminator` in the path should be the user's discriminator modulo 5—Test#1337 would be `1337 % 5`, which evaluates to 2.

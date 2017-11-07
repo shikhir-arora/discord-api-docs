@@ -1,6 +1,6 @@
 # Guild Resource
 
-Guilds in Discord represent a collection of users and channels into an isolated "server".
+Guilds in Discord represent an isolated collection of users and channels, and are often referred to as "servers" in the UI.
 
 ### Guild Object
 
@@ -10,36 +10,73 @@ Guilds in Discord represent a collection of users and channels into an isolated 
 |-------|------|-------------|
 | id | snowflake | guild id |
 | name | string | guild name (2-100 characters) |
-| icon | string | icon hash |
-| splash | string | splash hash |
+| icon | string | [icon hash](#DOCS_REFERENCE/image-formatting) |
+| splash | string | [splash hash](#DOCS_REFERENCE/image-formatting) |
 | owner\_id | snowflake | id of owner |
 | region | string | {voice\_region.id} |
 | afk\_channel\_id | snowflake | id of afk channel |
 | afk\_timeout | integer | afk timeout in seconds |
 | embed\_enabled | bool | is this guild embeddable (e.g. widget) |
 | embed\_channel\_id | snowflake | id of embedded channel |
-| verification\_level | integer | level of verification |
-| default\_message\_notifications | integer | default message notifications level |
-| roles | array | array of [role](#DOCS_PERMISSIONS/role-object) objects |
-| emojis | array | array of [emoji](#DOCS_GUILD/emoji-object) objects |
-| features | array | array of guild features |
-| mfa\_level | integer | required MFA level for the guild |
-| joined\_at \* | datetime | date this guild was joined at |
+| verification\_level | integer | level of [verification](#DOCS_GUILD/guild-object-verification-level) required for the guild |
+| default\_message\_notifications | integer | default message [notifications level](#DOCS_GUILD/guild-object-default-message-notification-level) |
+| explicit\_content\_filter | integer | default explicit content [filter level](#DOCS_GUILD/guild-object-explicit-content-filter-level) |
+| roles | array of [role](#DOCS_PERMISSIONS/role-object) objects | roles in the guild |
+| emojis | array of [emoji](#DOCS_EMOJI/emoji-object) objects | custom guild emojis |
+| features | array of strings | enabled guild features |
+| mfa\_level | integer | required [MFA level](#DOCS_GUILD/guild-object-mfa-level) for the guild |
+| application_id | ?snowflake | application id of the guild creator if it is bot-created |
+| widget_enabled | bool | whether or not the server widget is enabled |
+| widget_channel_id | snowflake | the channel id for the server widget |
+| joined\_at \* | ISO8601 timestamp | when this guild was joined at |
 | large \* | bool | whether this is considered a large guild |
 | unavailable \* | bool | is this guild unavailable |
 | member\_count \* | integer | total number of members in this guild |
-| voice\_states \* | array | array of [voice state](#DOCS_VOICE/voice-state-object) objects (without the `guild_id` key) |
-| members \* | array | array of [guild member](#DOCS_GUILD/guild-member-object) objects |
-| channels \* | array | array of [channel](#DOCS_CHANNEL/guild-channel-object) objects |
-| presences \* | array | array of simple presence objects, which share the same fields as [Presence Update event](#DOCS_GATEWAY/presence-update) sans a roles or guild_id key |
+| voice\_states \* | array of partial [voice state](#DOCS_VOICE/voice-state-object) objects |  (without the `guild_id` key) |
+| members \* | array of [guild member](#DOCS_GUILD/guild-member-object) objects | users in the guild |
+| channels \* | array of [channel](#DOCS_CHANNEL/channel-object) objects | channels in the guild |
+| presences \* | array of partial [presence update](#DOCS_GATEWAY/presence-update) objects | presences of the users in the guild |
 
 ** \* These fields are only sent within the [GUILD_CREATE](#DOCS_GATEWAY/guild-create) event **
+
+###### Default Message Notification Level
+
+| Key | Value |
+| --- | ----- |
+| ALL_MESSAGES | 0 |
+| ONLY_MENTIONS | 1 |
+
+###### Explicit Content Filter Level
+
+| Level | Integer
+| ---- | ------ |
+| DISABLED | 0 |
+| MEMBERS_WITHOUT_ROLES | 1 |
+| ALL_MEMBERS | 2 |
+
+###### MFA Level
+
+| Level | Integer |
+| ----- | ------- |
+| NONE | 0 |
+| ELEVATED | 1 |
+
+###### Verification Level
+
+| Level | Integer | Description |
+| ----- | ------- | ----------- |
+| NONE | 0 | unrestricted |
+| LOW | 1 | must have verified email on account |
+| MEDIUM | 2 | must be registered on Discord for longer than 5 minutes |
+| HIGH | 3 |  (╯°□°）╯︵ ┻━┻ - must be a member of the server for longer than 10 minutes |
+| VERY_HIGH | 4 | ┻━┻ミヽ(ಠ益ಠ)ﾉ彡┻━┻ - must have a verified phone number |
 
 ###### Example Guild
 
 ```json
 {
 	"id": "41771983423143937",
+	"application_id": null,
 	"name": "Discord Developers",
 	"icon": "SEkgTU9NIElUUyBBTkRSRUkhISEhISEh",
 	"splash": null,
@@ -50,6 +87,11 @@ Guilds in Discord represent a collection of users and channels into an isolated 
 	"embed_enabled": true,
 	"embed_channel_id": "41771983444115456",
 	"verification_level": 1,
+	"default_message_notifications": 0,
+	"explicit_content_filter": 0,
+	"mfa_level": 0,
+	"widget_enabled": false,
+	"widget_channel_id": "41771983423143937",
 	"roles": [],
 	"emojis": [],
 	"features": ["INVITE_SPLASH"],
@@ -59,14 +101,7 @@ Guilds in Discord represent a collection of users and channels into an isolated 
 
 ### Unavailable Guild Object
 
-Represents an Offline Guild, or a Guild whose information has not been provided through [Guild Create](#DOCS_GATEWAY/guild-create) events during the Gateway connect.
-
-###### Unavailable Guild Structure
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | snowflake | guild id |
-| unavailable | bool | should always be true |
+A partial [guild](#DOCS_GUILD/guild-object) object. Represents an Offline Guild, or a Guild whose information has not been provided through [Guild Create](#DOCS_GATEWAY/guild-create) events during the Gateway connect.
 
 ###### Example Unavailable Guild
 
@@ -102,9 +137,9 @@ Represents an Offline Guild, or a Guild whose information has not been provided 
 | Field | Type | Description |
 |-------|------|-------------|
 | user | object | [user](#DOCS_USER/user-object) object |
-| nick | string? | this users guild nickname (if one is set) |
-| roles | array | array of [role](#DOCS_PERMISSIONS/role-object) object id's |
-| joined_at | datetime | date the user joined the guild |
+| nick? | string | this users guild nickname (if one is set) |
+| roles | array of snowflakes | array of [role](#DOCS_PERMISSIONS/role-object) object ids |
+| joined_at | ISO8601 timestamp | when the user joined the guild |
 | deaf | bool | if the user is deafened |
 | mute | bool | if the user is muted |
 
@@ -137,7 +172,7 @@ Represents an Offline Guild, or a Guild whose information has not been provided 
 | expire_grace_period | integer | the grace period before expiring subscribers |
 | user | [user](#DOCS_USER/user-object) object | user for this integration |
 | account | [account](#DOCS_GUILD/integration-account-object) object | integration account information |
-| synced_at | timestamp | when this integration was last synced |
+| synced_at | ISO8601 timestamp | when this integration was last synced |
 
 ### Integration Account Object
 
@@ -148,24 +183,36 @@ Represents an Offline Guild, or a Guild whose information has not been provided 
 | id | string | id of the account |
 | name | string | name of the account |
 
-### Emoji Object
+### Ban Object
 
-###### Emoji Structure
+###### Ban Structure
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | snowflake | emoji id |
-| name | string | emoji name |
-| roles | array of [role object](#DOCS_PERMISSIONS/role-object) ids | roles this emoji is active for |
-| require_colons | bool | whether this emoji must be wrapped in colons |
-| managed | bool | whether this emoji is managed |
+| reason | ?string | the reason for the ban |
+| user | [user](#DOCS_USER/user-object) object | the banned user |
+
+###### Example Ban
+
+```json
+{
+	"reason": "mentioning b1nzy",
+	"user": {
+		"username": "Mason",
+		"discriminator": "9999",
+		"id": "53908099506183680",
+		"avatar": "a_bab14f271d565501444b2ca3be944b25"
+	}
+}
+```
+
 
 ## Create Guild % POST /guilds
 
 Create a new guild. Returns a [guild](#DOCS_GUILD/guild-object) object on success. Fires a [Guild Create](#DOCS_GATEWAY/guild-create) Gateway event.
 
 >warn
-> By default this endpoint is limited to 10 active guilds. These limits are raised for whitelisted [GameBridge](#DOCS_GAMEBRDIGE) applications.
+>By default this endpoint is limited to 10 active guilds. These limits are raised for whitelisted [GameBridge](#DOCS_GAMEBRDIGE) applications. Creating channel categories from this endpoint is also not supported.
 
 ###### JSON Params
 
@@ -175,23 +222,35 @@ Create a new guild. Returns a [guild](#DOCS_GUILD/guild-object) object on succes
 | region | string | {voice_region.id} for voice |
 | icon | string | base64 128x128 jpeg image for the guild icon |
 | verification_level | integer | guild verification level |
-| default\_message\_notifications | integer | default message notifications setting |
-| roles | array of [role](#DOCS_PERMISSIONS/role-object) objects | new guild roles
-| channels | array of [create guild channel](#DOCS_CHANNEL/create-guild-channel) body objects | new guild's channels
+| default\_message\_notifications | integer | default message [notifications setting](#DOCS_GUILD/default-message-notification-level) |
+| roles | array of [role](#DOCS_PERMISSIONS/role-object) objects | new guild roles |
+| channels | array of partial [channel](#DOCS_CHANNEL/channel-object) objects | new guild's channels |
+
+>warn
+>When using the `roles` parameter, the first member of the array is used to change properties of the guild's `@everyone` role. If you are trying to bootstrap a guild with additional roles, keep this in mind.
+
+###### Example Partial Channel Object
+
+```json
+{
+	"name": "naming-things-is-hard",
+	"type": 0
+}
+```
 
 >info
-> If roles are specified, the required `id` field within each role object is an integer placeholder, and will be replaced by the API upon consumption. Its purpose is to allow you to [overwrite](#DOCS_CHANNEL/overwrite-object) a role's permissions in a channel when also passing in channels with the channels array.
+>If roles are specified, the required `id` field within each role object is an integer placeholder, and will be replaced by the API upon consumption. Its purpose is to allow you to [overwrite](#DOCS_CHANNEL/overwrite-object) a role's permissions in a channel when also passing in channels with the channels array.
 
 ## Get Guild % GET /guilds/{guild.id#DOCS_GUILD/guild-object}
 
-Returns the new [guild](#DOCS_GUILD/guild-object) object for the given id.
+Returns the [guild](#DOCS_GUILD/guild-object) object for the given id.
 
 ## Modify Guild % PATCH /guilds/{guild.id#DOCS_GUILD/guild-object}
 
 Modify a guild's settings. Returns the updated [guild](#DOCS_GUILD/guild-object) object on success. Fires a [Guild Update](#DOCS_GATEWAY/guild-update) Gateway event.
 
 >info
-> All parameters to this endpoint are optional
+>All parameters to this endpoint are optional
 
 ###### JSON Params
 
@@ -200,7 +259,7 @@ Modify a guild's settings. Returns the updated [guild](#DOCS_GUILD/guild-object)
 | name | string | guild name |
 | region | string | guild {voice_region.id} |
 | verification_level | integer | guild verification level |
-| default\_message\_notifications | integer | default message notifications setting |
+| default\_message\_notifications | integer | default message [notifications setting](#DOCS_GUILD/default-message-notification-level) |
 | afk\_channel\_id | snowflake | id for afk channel |
 | afk_timeout | integer | afk timeout in seconds |
 | icon | string | base64 128x128 jpeg image for the guild icon |
@@ -209,35 +268,37 @@ Modify a guild's settings. Returns the updated [guild](#DOCS_GUILD/guild-object)
 
 ## Delete Guild % DELETE /guilds/{guild.id#DOCS_GUILD/guild-object}
 
-Delete a guild permanently. User must be owner. Returns the [guild](#DOCS_GUILD/guild-object) object on success. Fires a [Guild Delete](#DOCS_GATEWAY/guild-delete) Gateway event.
+Delete a guild permanently. User must be owner. Returns `204 No Content` on success. Fires a [Guild Delete](#DOCS_GATEWAY/guild-delete) Gateway event.
 
 ## Get Guild Channels % GET /guilds/{guild.id#DOCS_GUILD/guild-object}/channels
 
-Returns a list of guild [channel](#DOCS_CHANNEL/guild-channel-object) objects.
+Returns a list of guild [channel](#DOCS_CHANNEL/channel-object) objects.
 
 ## Create Guild Channel % POST /guilds/{guild.id#DOCS_GUILD/guild-object}/channels
 
-Create a new [channel](#DOCS_CHANNEL/guild-channel-object) object for the guild. Requires the 'MANAGE_CHANNELS' permission. Returns the new [channel](#DOCS_CHANNEL/guild-channel-object) object on success. Fires a [Channel Create](#DOCS_GATEWAY/channel-create) Gateway event.
+Create a new [channel](#DOCS_CHANNEL/channel-object) object for the guild. Requires the 'MANAGE_CHANNELS' permission. Returns the new [channel](#DOCS_CHANNEL/channel-object) object on success. Fires a [Channel Create](#DOCS_GATEWAY/channel-create) Gateway event.
 
 >info
-> All parameters for this endpoint are optional excluding 'name'
+>All parameters for this endpoint are optional excluding 'name'
 
 ###### JSON Params
 
 | Field | Type | Description |
 |-------|------|-------------|
 | name | string | channel name (2-100 characters) |
-| type | string | "voice" or "text" |
+| type | integer | the [type of channel](#DOCS_CHANNEL/channel-object-channel-types) |
 | bitrate | integer | the bitrate (in bits) of the voice channel (voice only) |
 | user_limit | integer | the user limit of the voice channel (voice only) |
 | permission_overwrites | an array of [overwrite](#DOCS_CHANNEL/overwrite-object) objects | the channel's permission overwrites |
+| parent_id | snowflake | id of the parent category for a channel |
+| nsfw | bool | if the channel is nsfw |
 
 ## Modify Guild Channel Positions % PATCH /guilds/{guild.id#DOCS_GUILD/guild-object}/channels
 
-Modify the positions of a set of [channel](#DOCS_CHANNEL/guild-channel-object) objects for the guild. Requires 'MANAGE_CHANNELS' permission. Returns a list of all of the guild's [channel](#DOCS_CHANNEL/guild-channel-object) objects on success. Fires multiple [Channel Update](#DOCS_GATEWAY/channel-update) Gateway events.
+Modify the positions of a set of [channel](#DOCS_CHANNEL/channel-object) objects for the guild. Requires 'MANAGE_CHANNELS' permission. Returns a 204 empty response on success. Fires multiple [Channel Update](#DOCS_GATEWAY/channel-update) Gateway events.
 
 >info
-> Only channels to be modified are required, with the minimum being a swap between at least two channels.
+>Only channels to be modified are required, with the minimum being a swap between at least two channels.
 
 This endpoint takes a JSON array of parameters in the following format:
 
@@ -257,7 +318,7 @@ Returns a [guild member](#DOCS_GUILD/guild-member-object) object for the specifi
 Returns a list of [guild member](#GUILD/guild-member-object) objects that are members of the guild.
 
 >info
-> All parameters to this endpoint are optional
+>All parameters to this endpoint are optional
 
 ###### Query String Params
 
@@ -268,10 +329,10 @@ Returns a list of [guild member](#GUILD/guild-member-object) objects that are me
 
 ## Add Guild Member % PUT /guilds/{guild.id#DOCS_GUILD/guild-object}/members/{user.id#DOCS_USER/user-object}
 
-Adds a user to the guild, provided you have a valid oauth2 access token for the user with the `guilds.join` scope. Returns a 201 Created with the [guild member](#DOCS_GUILD/guild-member-object) as the body. Fires a [Guild Member Add](#DOCS_GATEWAY/guild-member-add) Gateway event. Requires the bot to have the `CREATE_INSTANT_INVITE` permission. 
+Adds a user to the guild, provided you have a valid oauth2 access token for the user with the `guilds.join` scope. Returns a 201 Created with the [guild member](#DOCS_GUILD/guild-member-object) as the body. Fires a [Guild Member Add](#DOCS_GATEWAY/guild-member-add) Gateway event. Requires the bot to have the `CREATE_INSTANT_INVITE` permission.
 
 >info
-> All parameters to this endpoint except for `access_token` are optional.
+>All parameters to this endpoint except for `access_token` are optional.
 
 ###### JSON Params
 
@@ -279,7 +340,7 @@ Adds a user to the guild, provided you have a valid oauth2 access token for the 
 |-------|------|-------------|------------|
 | access_token | string | an oauth2 access token granted with the `guilds.join` to the bot's application for the user you want to add to the guild | |
 | nick | string | value to set users nickname to | MANAGE_NICKNAMES |
-| roles | array | array of roles the member is assigned | MANAGE_ROLES |
+| roles | array of snowflakes | array of role ids the member is assigned | MANAGE_ROLES |
 | mute | bool | if the user is muted | MUTE_MEMBERS |
 | deaf | bool | if the user is deafened | DEAFEN_MEMBERS |
 
@@ -288,15 +349,15 @@ Adds a user to the guild, provided you have a valid oauth2 access token for the 
 Modify attributes of a [guild member](#DOCS_GUILD/guild-member-object). Returns a 204 empty response on success. Fires a [Guild Member Update](#DOCS_GATEWAY/guild-member-update) Gateway event.
 
 >info
-> All parameters to this endpoint are optional. When moving members to channels, the API user
-> _must_ have permissions to both connect to the channel and have the MOVE_MEMBERS permission.
+>All parameters to this endpoint are optional. When moving members to channels, the API user
+>_must_ have permissions to both connect to the channel and have the MOVE_MEMBERS permission.
 
 ###### JSON Params
 
 | Field | Type | Description | Permission |
 |-------|------|-------------|------------|
 | nick | string | value to set users nickname to | MANAGE_NICKNAMES |
-| roles | array | array of role ids the member is assigned | MANAGE_ROLES |
+| roles | array of snowflakes | array of role ids the member is assigned | MANAGE_ROLES |
 | mute | bool | if the user is muted | MUTE_MEMBERS |
 | deaf | bool | if the user is deafened | DEAFEN_MEMBERS |
 | channel_id | snowflake | id of channel to move user to (if they are connected to voice) | MOVE_MEMBERS |
@@ -325,13 +386,13 @@ Remove a member from a guild. Requires 'KICK_MEMBERS' permission. Returns a 204 
 
 ## Get Guild Bans % GET /guilds/{guild.id#DOCS_GUILD/guild-object}/bans
 
-Returns a list of [user](#DOCS_USER/user-object) objects that are banned from this guild. Requires the 'BAN_MEMBERS' permission.
+Returns a list of [ban](#DOCS_GUILD/ban-object) objects for the users banned from this guild. Requires the 'BAN_MEMBERS' permission.
 
 ## Create Guild Ban % PUT /guilds/{guild.id#DOCS_GUILD/guild-object}/bans/{user.id#DOCS_USER/user-object}
 
 Create a guild ban, and optionally delete previous messages sent by the banned user. Requires the 'BAN_MEMBERS' permission. Returns a 204 empty response on success. Fires a [Guild Ban Add](#DOCS_GATEWAY/guild-ban-add) Gateway event.
 
-###### JSON Params
+###### Query String Params
 
 | Field | Type | Description |
 |-------|------|-------------|

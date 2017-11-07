@@ -11,14 +11,14 @@ Used to represent a webhook.
 | Field | Type | Description |
 |-------|------|-------------|
 | id | snowflake | the id of the webhook |
-| guild_id | snowflake? | the guild id this webhook is for |
+| guild_id? | snowflake | the guild id this webhook is for |
 | channel_id | snowflake | the channel id this webhook is for |
-| user | [User](#DOCS_USER/user-object)? | the user this webhook was created by (not returned when getting a webhook with its token) |
+| user? | [user](#DOCS_USER/user-object) object | the user this webhook was created by (not returned when getting a webhook with its token) |
 | name | ?string | the default name of the webhook |
 | avatar | ?string | the default avatar of the webhook |
 | token | string | the secure token of the webhook |
 
-###### Webhook Example
+###### Example Webhook
 
 ```json
 {
@@ -45,8 +45,8 @@ Create a new webhook. Returns a [webhook](#DOCS_WEBHOOK/webhook-object) object o
 
 | Field | Type | Description |
 |-------|------|-------------|
-| name | string | name of the webhook (2-100 characters) |
-| avatar | [avatar data](#DOCS_USER/avatar-data) | base64 128x128 jpeg image for the default webhook avatar |
+| name | string | name of the webhook (2-32 characters) |
+| avatar | [avatar data](#DOCS_USER/avatar-data) string | image for the default webhook avatar |
 
 ## Get Channel Webhooks % GET /channels/{channel.id#DOCS_CHANNEL/channel-object}/webhooks
 
@@ -69,18 +69,19 @@ Same as above, except this call does not require authentication and returns no u
 Modify a webhook. Returns the updated [webhook](#DOCS_WEBHOOK/webhook-object) object on success.
 
 >info
-> All parameters to this endpoint are optional
+>All parameters to this endpoint are optional
 
 ###### JSON Params
 
 | Field | Type | Description |
 |-------|------|-------------|
 | name | string | the default name of the webhook |
-| avatar | [avatar data](#DOCS_USER/avatar-data) | base64 128x128 jpeg image for the default webhook avatar |
+| avatar | [avatar data](#DOCS_USER/avatar-data) string | image for the default webhook avatar |
+| channel_id | snowflake | the new channel id this webhook should be moved to |
 
 ## Modify Webhook with Token % PATCH /webhooks/{webhook.id#DOCS_WEBHOOK/webhook-object}/{webhook.token#DOCS_WEBHOOK/webhook-object}
 
-Same as above, except this call does not require authentication and returns no user in the webhook object.
+Same as above, except this call does not require authentication, does not accept a `channel_id` parameter in the body, and does not return a user in the webhook object.
 
 ## Delete Webhook % DELETE /webhooks/{webhook.id#DOCS_WEBHOOK/webhook-object}
 
@@ -93,7 +94,7 @@ Same as above, except this call does not require authentication.
 ## Execute Webhook % POST /webhooks/{webhook.id#DOCS_WEBHOOK/webhook-object}/{webhook.token#DOCS_WEBHOOK/webhook-object}
 
 >warn
-> This endpoint supports both JSON and form data bodies. It does require multipart/form-data requests instead of the normal JSON request type when uploading files. Make sure you set your `Content-Type` to `multipart/form-data` if you're doing that. Note that in that case, the `embeds` field cannot be used, but you can pass an url-encoded JSON body as a form value for `payload_json`.
+>This endpoint supports both JSON and form data bodies. It does require multipart/form-data requests instead of the normal JSON request type when uploading files. Make sure you set your `Content-Type` to `multipart/form-data` if you're doing that. Note that in that case, the `embeds` field cannot be used, but you can pass an url-encoded JSON body as a form value for `payload_json`.
 
 ###### Querystring Params
 
@@ -113,7 +114,7 @@ Same as above, except this call does not require authentication.
 | embeds | array of [embed](#DOCS_CHANNEL/embed-object) objects | embedded `rich` content | one of content, file, embeds |
 
 >info
-> For the webhook embed objects, you can set every field except `type` (it will be `rich` regardless of if you try to set it), `provider`, `video`, and any `height`, `width`, or `proxy_url` values for images.
+>For the webhook embed objects, you can set every field except `type` (it will be `rich` regardless of if you try to set it), `provider`, `video`, and any `height`, `width`, or `proxy_url` values for images.
 
 ## Execute Slack-Compatible Webhook % POST /webhooks/{webhook.id#DOCS_WEBHOOK/webhook-object}/{webhook.token#DOCS_WEBHOOK/webhook-object}/slack
 
